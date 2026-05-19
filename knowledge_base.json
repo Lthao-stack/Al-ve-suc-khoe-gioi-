@@ -1,0 +1,44 @@
+[
+  {
+    "topic": "dậy thì nam",
+    "keywords": ["dậy thì nam", "vỡ giọng", "mọc ria", "mộng tinh", "tăng chiều cao"],
+    "answer": "Dậy thì nam thường bắt đầu khoảng 9-14 tuổi với các dấu hiệu: tinh hoàn lớn dần, vỡ giọng, mọc lông, có thể mộng tinh. Đây thường là thay đổi sinh lý bình thường.",
+    "source": "WHO - Adolescent health",
+    "last_updated": "2026-05-19"
+  },
+  {
+    "topic": "dậy thì nữ",
+    "keywords": ["dậy thì nữ", "ngực phát triển", "kinh nguyệt đầu", "mọc lông mu", "cao nhanh"],
+    "answer": "Dậy thì nữ thường bắt đầu khoảng 8-13 tuổi. Dấu hiệu thường gặp gồm ngực phát triển, cao nhanh, có kinh nguyệt lần đầu và thay đổi cảm xúc.",
+    "source": "CDC - Puberty",
+    "last_updated": "2026-05-19"
+  },
+  {
+    "topic": "hiv",
+    "keywords": ["hiv", "phơi nhiễm hiv", "pep", "prep"],
+    "answer": "HIV lây qua máu, tình dục không bảo vệ, và từ mẹ sang con. Nếu có phơi nhiễm nguy cơ cao, cần tư vấn PEP càng sớm càng tốt (tốt nhất trong 72 giờ).",
+    "source": "CDC - HIV Basics",
+    "last_updated": "2026-05-19"
+  },
+  {
+    "topic": "bao cao su",
+    "keywords": ["bao cao su", "đeo bao", "rách bao", "tuột bao"],
+    "answer": "Bao cao su giúp giảm nguy cơ mang thai và STI khi dùng đúng cách từ đầu đến cuối cuộc quan hệ.",
+    "source": "WHO - Contraception",
+    "last_updated": "2026-05-19"
+  },
+  {
+    "topic": "thuốc tránh thai khẩn cấp",
+    "keywords": ["thuốc tránh thai khẩn cấp", "uống thuốc khẩn cấp", "72 giờ", "120 giờ"],
+    "answer": "Thuốc tránh thai khẩn cấp hiệu quả cao hơn khi dùng càng sớm càng tốt sau quan hệ nguy cơ. Không nên lạm dụng như biện pháp thường xuyên.",
+    "source": "Bộ Y tế Việt Nam - Hướng dẫn SKSS",
+    "last_updated": "2026-05-19"
+  },
+  {
+    "topic": "khí hư",
+    "keywords": ["khí hư", "dịch âm đạo", "huyết trắng", "khí hư hôi"],
+    "answer": "Khí hư sinh lý thường trong hoặc trắng sữa, không mùi hôi nặng, không ngứa rát. Khí hư vàng/xanh, hôi, ngứa hoặc đau rát gợi ý viêm nhiễm cần khám.",
+    "source": "Bệnh viện Từ Dũ - Tư vấn phụ khoa",
+    "last_updated": "2026-05-19"
+  }
+]
