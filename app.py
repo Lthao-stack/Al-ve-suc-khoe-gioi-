@@ -22,10 +22,38 @@ knowledge_base = [
     {"topic": "bị lạm dụng tình dục tổn thương tâm lý", "answer": "Người từng bị lạm dụng có thể gặp lo âu, sợ hãi hoặc ám ảnh kéo dài. Đây không phải lỗi của nạn nhân, nên tìm hỗ trợ từ chuyên gia hoặc người đáng tin cậy."},
 ]
 
+OUT_OF_SCOPE_KEYWORDS = {
+    "game", "gaming", "liên quân", "free fire", "pubg", "thời tiết", "nấu ăn", "công thức", "điện thoại", "iphone",
+    "android", "laptop", "macbook", "phim", "anime", "bóng đá", "thể thao", "chứng khoán", "tiền ảo", "bitcoin",
+    "lập trình", "python", "javascript", "học toán", "bài tập toán",
+}
+
+PSYCHOLOGICAL_SIGNALS = {
+    "lo lắng có thai", "lo dính bầu", "sợ có thai", "áp lực quan hệ", "bị thúc ép", "tự ti cơ thể", "mặc cảm cơ thể",
+    "bị ép quan hệ", "sợ bệnh xã hội", "mất cảm xúc", "lạnh nhạt chuyện ấy", "stress sau quan hệ", "lo vô sinh",
+    "sợ bị đánh giá giới tính", "sợ lộ xu hướng", "ám ảnh", "hoảng loạn", "overthinking", "toang", "khủng hoảng",
+}
+
+DANGER_RULES = [
+    ("🔴 nguy hiểm", ["ngất", "chóng mặt", "sốt cao", "xâm hại", "bị hiếp", "chảy máu ồ ạt", "đau dữ dội"]),
+    ("🟠 cần khám sớm", ["chảy máu sau quan hệ", "rách bao", "nghi hiv", "nghi std", "mưng mủ", "sưng đỏ", "tiểu buốt nặng", "phát ban"]),
+    ("🟡 trung bình", ["uống quá liều thuốc tránh thai", "đau bụng dưới", "dịch lạ", "lo mắc bệnh xã hội"]),
+]
+
+NEGATION_PATTERNS = ["không đau", "không bị ngứa", "không ngứa", "chưa quan hệ", "không quan hệ"]
+
 
 def normalize_text(text: str) -> str:
     text = unicodedata.normalize("NFC", text).lower().strip()
     return re.sub(r"\s+", " ", text)
+
+
+def has_keyword(text: str, keyword: str) -> bool:
+    return keyword in text
+
+
+def is_negated(text: str, symptom: str) -> bool:
+    return any(f"{neg} {symptom}" in text or neg in text for neg in NEGATION_PATTERNS)
 
 
 df = pd.DataFrame(knowledge_base)
@@ -35,42 +63,110 @@ tfidf_matrix = vectorizer.fit_transform(documents)
 
 GREETING_PATTERNS = [r"^(xin chào|chào|hello|hi|hey|bot ơi)[\s!,.]*$"]
 END_KEYWORDS = ["tạm biệt", "bye", "kết thúc", "dừng", "hết rồi", "không hỏi nữa", "xong rồi", "cảm ơn"]
-ADVICE_KEYWORDS = ["nên làm gì", "làm sao", "làm thế nào", "có sao không", "nguy hiểm không", "có cần đi khám không", "tư vấn"]
-WARNING_KEYWORDS = ["đau dữ dội", "chảy máu nhiều", "dịch lạ", "mùi hôi", "bị ép", "xâm hại", "lạm dụng"]
 
 
-def classify_topic(text: str) -> str:
+@dataclass
+class AgentContext:
+    text: str
+    topic: str = ""
+    answer: str | None = None
+    warning: str = ""
+    risk_level: str = "🟢 nhẹ"
+    out_of_scope: bool = False
+    psychological: bool = False
+
+
+def scope_guard_agent(text: str) -> bool:
+    return any(k in text for k in OUT_OF_SCOPE_KEYWORDS)
+
+
+def planner_agent(text: str) -> str:
     if any(k in text for k in ["gay", "lesbian", "bisexual", "lgbt", "come out", "đồng tính", "song tính", "chuyển giới"]):
         return "LGBTQ+ và bản dạng giới"
-    if any(k in text for k in ["dậy thì", "vỡ giọng", "mọc lông", "mộng tinh", "thủ dâm"]):
-        return "Tuổi dậy thì và phát triển cơ thể"
+    if any(k in text for k in ["tâm lý", "lo", "sợ", "áp lực", "mất cảm xúc", "stress", "tự ti"]):
+        return "Tâm lý và cảm xúc tình dục"
     if any(k in text for k in ["bao cao su", "tránh thai", "thuốc tránh thai", "có thai", "que thử thai"]):
         return "Tình dục an toàn và tránh thai"
-    if any(k in text for k in ["sti", "bệnh lây", "ngứa", "rát", "dịch", "mùi hôi", "viêm"]):
+    if any(k in text for k in ["sti", "std", "hiv", "bệnh lây", "ngứa", "rát", "dịch", "mùi hôi", "viêm"]):
         return "Sức khỏe sinh sản và bệnh lý"
     return "Sức khỏe giới tính chung"
 
 
-def retrieve_answer(question: str):
+def detect_psychological_agent(text: str) -> bool:
+    return any(k in text for k in PSYCHOLOGICAL_SIGNALS)
+
+
+def retrieve_answer_agent(question: str):
     user_vec = vectorizer.transform([question])
     scores = cosine_similarity(user_vec, tfidf_matrix).flatten()
     idx = int(scores.argmax())
-    if scores[idx] < 0.1:
+    if scores[idx] < 0.12:
         return None
     return df.iloc[idx]["answer"]
 
 
-def generate_advice(text: str) -> str:
-    if not any(k in text for k in ADVICE_KEYWORDS):
+def safety_agent(text: str) -> tuple[str, str]:
+    for risk, signals in DANGER_RULES:
+        if any(s in text and not is_negated(text, s) for s in signals):
+            if risk == "🔴 nguy hiểm":
+                msg = "\n\n**Cảnh báo khẩn:** Bạn có dấu hiệu nguy hiểm cao. Hãy đến cơ sở y tế/cấp cứu ngay, ưu tiên an toàn cá nhân."
+            elif risk == "🟠 cần khám sớm":
+                msg = "\n\n**Cảnh báo:** Đây là tình huống cần khám sớm trong ngày để được xử trí đúng (xét nghiệm, dự phòng phơi nhiễm, xử lý tổn thương)."
+            else:
+                msg = "\n\n**Lưu ý an toàn:** Triệu chứng mức trung bình, cần theo dõi sát và đi khám nếu kéo dài hoặc nặng hơn."
+            return risk, msg
+    return "🟢 nhẹ", ""
+
+
+def psychological_support_agent(text: str) -> str:
+    if not detect_psychological_agent(text):
         return ""
-    advice = ["- Theo dõi triệu chứng và mức độ ảnh hưởng trong sinh hoạt hằng ngày.", "- Tránh tự điều trị theo nguồn không rõ ràng.", "- Nếu lo lắng kéo dài, nên gặp nhân viên y tế để được tư vấn trực tiếp."]
-    return "\n\n**Lời khuyên:**\n" + "\n".join(advice)
+
+    guidance = [
+        "- Cảm xúc lo lắng/xấu hổ lúc này là điều dễ hiểu, bạn không cô đơn.",
+        "- Mình khuyên bạn tập trung vào dấu hiệu thực tế (thời điểm quan hệ, biện pháp bảo vệ, triệu chứng thật sự).",
+        "- Nếu cảm giác hoảng loạn kéo dài, hãy nói chuyện với người tin cậy hoặc chuyên gia tâm lý.",
+    ]
+
+    if any(k in text for k in ["bị ép", "xâm hại", "cưỡng ép"]):
+        guidance.insert(0, "- Bạn cần ưu tiên an toàn cá nhân ngay: rời khỏi môi trường nguy hiểm và liên hệ người hỗ trợ.")
+
+    return "\n\n**Hỗ trợ tâm lý:**\n" + "\n".join(guidance)
 
 
-def generate_warning(text: str) -> str:
-    if any(k in text for k in WARNING_KEYWORDS):
-        return "\n\n**Cảnh báo:** Có dấu hiệu cần được hỗ trợ sớm. Nếu tình trạng nặng hơn hoặc liên quan ép buộc/xâm hại, hãy tìm trợ giúp ngay từ cơ sở y tế hoặc người đáng tin cậy."
-    return ""
+def ask_followup_agent(text: str) -> str:
+    missing = []
+    if not any(k in text for k in ["bao cao su", "không bao", "rách bao", "xuất tinh", "chưa quan hệ"]):
+        missing.append("bạn có dùng biện pháp bảo vệ nào không")
+    if not any(k in text for k in ["bao lâu", "mấy ngày", "hôm qua", "hôm kia", "tuần trước"]):
+        missing.append("sự việc xảy ra cách đây bao lâu")
+    if not any(k in text for k in ["đau", "chảy máu", "sốt", "dịch", "ngứa", "không đau", "không bị ngứa"]):
+        missing.append("hiện tại có triệu chứng cụ thể nào không")
+
+    if not missing:
+        return ""
+    return "\n\n**Mình cần thêm thông tin để tư vấn chính xác hơn:** " + "; ".join(missing) + "."
+
+
+def out_of_scope_response() -> str:
+    return (
+        "Xin lỗi, tôi chỉ hỗ trợ các vấn đề liên quan sức khỏe giới tính và sinh sản. "
+        "Bạn có thể đặt câu hỏi về tránh thai, STI/STD, an toàn khi quan hệ, hoặc sức khỏe tâm lý liên quan tình dục nhé."
+    )
+
+
+def responder_agent(ctx: AgentContext) -> str:
+    if ctx.out_of_scope:
+        return out_of_scope_response()
+
+    base = ctx.answer or "Mình chưa thấy đủ dữ liệu để kết luận ngay."
+    response = f"### Nhóm nội dung: {ctx.topic}\n\n**Mức nguy cơ hiện tại: {ctx.risk_level}**\n\n{base}"
+    response += psychological_support_agent(ctx.text)
+    response += ctx.warning
+    response += ask_followup_agent(ctx.text)
+    response += "\n\n> Lưu ý: Thông tin chỉ mang tính tham khảo, không thay thế tư vấn y tế chuyên môn."
+    response += "\n\n<sub>Agentic flow: Scope Guard → Planner → Retriever → Safety → Psychological Support → Responder</sub>"
+    return response
 
 
 @dataclass
@@ -83,7 +179,7 @@ class ChatState:
         texts = self.asked_questions + [message]
         temp = vectorizer.transform(texts)
         scores = cosine_similarity(temp[-1], temp[:-1]).flatten()
-        return bool(scores.max() > 0.9)
+        return bool(scores.max() > 0.92)
 
 
 def chatbot(message: str, history: list, state: ChatState):
@@ -92,26 +188,26 @@ def chatbot(message: str, history: list, state: ChatState):
         return "Bạn hãy nhập câu hỏi để mình hỗ trợ nhé.", state
 
     if any(re.match(p, text) for p in GREETING_PATTERNS):
-        return "Xin chào 👋 Mình có thể hỗ trợ các câu hỏi thường gặp về sức khỏe giới tính.", state
+        return "Xin chào 👋 Mình có thể hỗ trợ các câu hỏi về sức khỏe giới tính, sinh sản và an toàn tâm lý khi quan hệ.", state
 
     if any(k in text for k in END_KEYWORDS):
         state.asked_questions.clear()
         return "Mình đã kết thúc cuộc trò chuyện và làm mới ngữ cảnh. Cảm ơn bạn!", state
 
     if state.is_repeat(text):
-        return "Bạn đã hỏi nội dung tương tự trước đó. Hãy thử bổ sung thêm chi tiết để mình hỗ trợ chính xác hơn nhé.", state
+        return "Bạn đang hỏi nội dung gần giống trước đó. Nếu được, hãy thêm mốc thời gian, triệu chứng và mức độ để mình tư vấn đúng hơn.", state
 
     state.asked_questions.append(text)
-    answer = retrieve_answer(text)
-    if not answer:
-        return "Mình chưa có dữ liệu phù hợp trong bộ tri thức hiện tại. Bạn có thể mô tả cụ thể hơn không?", state
 
-    topic = classify_topic(text)
-    response = f"### Nhóm nội dung: {topic}\n\n{answer}"
-    response += generate_advice(text)
-    response += generate_warning(text)
-    response += "\n\n> Lưu ý: Thông tin chỉ mang tính tham khảo, không thay thế tư vấn y tế chuyên môn."
-    return response, state
+    ctx = AgentContext(text=text)
+    ctx.out_of_scope = scope_guard_agent(text)
+    if not ctx.out_of_scope:
+        ctx.topic = planner_agent(text)
+        ctx.answer = retrieve_answer_agent(text)
+        ctx.risk_level, ctx.warning = safety_agent(text)
+        ctx.psychological = detect_psychological_agent(text)
+
+    return responder_agent(ctx), state
 
 
 custom_css = """
@@ -135,7 +231,11 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Soft(primary_hue="green")) as dem
         additional_inputs=[state],
         additional_outputs=[state],
         textbox=gr.Textbox(placeholder="Ví dụ: Trễ kinh 10 ngày thì nên làm gì?", lines=2),
-        examples=["Dậy thì bình thường bắt đầu lúc mấy tuổi?", "Dấu hiệu STI thường gặp là gì?", "Nếu bị ép buộc quan hệ thì nên làm gì?"],
+        examples=[
+            "Em lo có thai dù dùng bao cao su thì nên làm gì?",
+            "Sau quan hệ bị chảy máu và đau dữ dội có nguy hiểm không?",
+            "Mình bị ép quan hệ và rất hoảng loạn, giờ nên làm gì?",
+        ],
     )
 
 if __name__ == "__main__":
