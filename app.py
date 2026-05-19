@@ -9,49 +9,75 @@ except ModuleNotFoundError:  # for test environments
 
 APP_NAME = "TRỢ LÝ ẢO HỖ TRỢ TRẢ LỜI CÂU HỎI THƯỜNG GẶP VỀ SỨC KHỎE GIỚI TÍNH"
 
-INTENT_PRIORITY = [
-    "emergency",
-    "out_of_scope",
-    "greeting",
-    "ending",
-    "missing_info",
-    "safe_sex",
-    "pregnancy_contraception",
-    "sti_std",
-    "male_health",
-    "female_health",
-    "lgbtq",
-    "psychology_emotion",
-]
+SIMILARITY_THRESHOLD = 0.22
+MIN_LEN_FOR_CONFIDENT = 8
+
+OUT_OF_SCOPE_REPLY = (
+    "Mình chỉ hỗ trợ các câu hỏi về sức khỏe giới tính, sức khỏe sinh sản, dậy thì, "
+    "tránh thai, bệnh lây truyền qua đường tình dục và các vấn đề liên quan."
+)
 
 INTENT_KEYWORDS = {
+    "greeting": ["xin chào", "chào", "hello", "hi", "hey", "bot ơi"],
+    "ending": ["tạm biệt", "bye", "kết thúc", "dừng", "xong rồi", "không hỏi nữa", "cảm ơn"],
     "out_of_scope": [
-        "nấu mì", "mì cay", "thời tiết", "mua laptop", "liên quân", "giá vàng", "game", "nấu ăn", "laptop", "điện thoại", "học bài", "tiền bạc", "thể thao",
+        "thời tiết", "mua laptop", "giá vàng", "điểm thi", "chứng khoán", "bóng đá", "nấu ăn", "game", "điện thoại"
     ],
-    "safe_sex": ["quan hệ lần đầu", "bao cao su", "không dùng bao", "thuốc tránh thai khẩn cấp", "quan hệ ngoài", "xuất tinh ngoài", "ngày an toàn", "loại bao cao su"],
-    "pregnancy_contraception": ["trễ kinh", "chậm kinh", "có thai", "mang thai", "thử thai", "que thử thai", "cho con bú", "uống thuốc tránh thai"],
-    "sti_std": ["đau rát khi đi tiểu", "mùi hôi", "mụn sinh dục", "hiv", "quan hệ bằng miệng", "giang mai", "sùi mào gà", "lậu", "std", "sti", "loét", "mủ"],
-    "male_health": ["xuất tinh sớm", "khó cương", "dương vật cong", "thủ dâm nhiều", "tinh dịch màu vàng", "đau tinh hoàn", "mất ham muốn"],
-    "female_health": ["đau bụng khi quan hệ", "khí hư vàng", "ngứa rát vùng kín", "kinh nguyệt không đều", "khô rát khi quan hệ", "đau bụng dưới trước kỳ kinh", "khí hư hôi"],
-    "lgbtq": ["bisexual", "gay", "lesbian", "thích người cùng giới", "come out", "chuyển giới", "hormone", "bối rối giới tính", "đồng tính", "song tính"],
-    "psychology_emotion": ["sợ mang thai", "không muốn dùng bao", "áp lực khi quan hệ", "tự ti cơ thể", "lo vô sinh", "ép quan hệ", "sợ bệnh xã hội", "lo lắng sau quan hệ"],
-    "emergency": ["chảy máu nhiều", "đau bụng dữ dội", "sưng đỏ nghiêm trọng", "xâm hại tình dục", "rách bao cao su", "quá liều thuốc tránh thai khẩn cấp", "ngất", "chóng mặt nhiều", "sốt cao", "mủ", "loét", "sưng đau nặng"],
+    "safe_sex": [
+        "quan hệ an toàn", "đeo bao", "bao cao su", "quan hệ lần đầu", "cọ xát ngoài", "xuất tinh ngoài", "xuất vào miệng", "quan hệ bằng miệng",
+        "ngày an toàn", "quan hệ không dùng bao", "rách bao"
+    ],
+    "contraception_pregnancy": [
+        "trễ kinh", "chậm kinh", "mang thai", "có thai", "que thử thai", "thử thai", "thuốc tránh thai", "khẩn cấp", "uống thuốc ngừa thai", "cho con bú có thai"
+    ],
+    "sti_std": [
+        "hiv", "hpv", "lậu", "giang mai", "herpes", "mụn sinh dục", "loét", "tiết dịch", "mủ", "đau rát khi tiểu", "bệnh xã hội", "std", "sti"
+    ],
+    "puberty": [
+        "dậy thì", "vỡ giọng", "mọc lông", "ngực phát triển", "mộng tinh", "kinh nguyệt lần đầu", "cao lên", "tuổi dậy thì"
+    ],
+    "hygiene": [
+        "vệ sinh vùng kín", "rửa vùng kín", "dung dịch vệ sinh", "khí hư", "viêm âm đạo", "viêm đường tiểu", "ngứa vùng kín", "mùi hôi"
+    ],
+    "lgbtq": ["gay", "lesbian", "đồng tính", "song tính", "chuyển giới", "come out", "bản dạng giới", "lgbt"],
+    "psychology_consent": [
+        "bị ép", "không đồng thuận", "sợ mang thai", "lo quá", "hoảng loạn", "ám ảnh", "đồng thuận", "tâm lý", "xâm hại"
+    ],
+    "sexual_function": [
+        "xuất tinh sớm", "rối loạn cương", "khó cương", "đau khi quan hệ", "giảm ham muốn", "thủ dâm", "không lên đỉnh", "đau dương vật"
+    ],
 }
 
-MISSING_INFO_PATTERNS = {
-    "đau khi quan hệ": ["Bạn cho mình biết bạn là nam hay nữ, đau ở vị trí nào, kéo dài bao lâu, có chảy máu/khí hư/sốt không?"],
-    "ngứa vùng kín": ["Bạn có kèm khí hư bất thường, mùi hôi, đau tiểu hoặc nổi mụn không?"],
-    "chậm kinh": ["Bạn trễ kinh bao nhiêu ngày, có quan hệ không bảo vệ không, ngày quan hệ gần nhất và đã thử thai chưa?"],
-    "lo mình có thai": ["Bạn trễ kinh bao nhiêu ngày, có quan hệ không bảo vệ không, ngày quan hệ gần nhất và đã thử thai chưa?"],
-    "nổi mụn ở vùng kín": ["Mụn có đau/rát/chảy dịch không, xuất hiện bao lâu rồi, và có quan hệ nguy cơ gần đây không?"],
-    "đau bụng dưới": ["Mức độ đau hiện tại thế nào, có sốt/chảy máu/khí hư bất thường/chậm kinh không?"],
-    "xuất tinh sớm": ["Tình trạng này kéo dài bao lâu, xảy ra thường xuyên không, và bạn có đang căng thẳng nhiều không?"],
-    "không có cảm giác khi quan hệ": ["Tình trạng bắt đầu từ khi nào, có áp lực tâm lý/đau/khô rát/mất ham muốn không?"],
-}
+MISSING_SHORT_PHRASES = ["bị sao", "có sao không", "lo quá", "sao đây", "giờ sao", "mình lo"]
 
-NEGATIONS = ["không đau", "không ngứa", "không quan hệ", "chưa quan hệ", "không chảy máu"]
-GREETING_PATTERNS = [r"^(xin chào|chào|hello|hi|hey|bot ơi)[\s!,.]*$"]
-ENDING_PATTERNS = ["tạm biệt", "bye", "kết thúc", "dừng", "xong rồi", "không hỏi nữa", "cảm ơn"]
+KNOWLEDGE_BASE = [
+    {"topic": "dậy thì nam", "keywords": ["dậy thì nam", "vỡ giọng", "mọc ria", "mộng tinh", "tăng chiều cao"], "answer": "Dậy thì nam thường bắt đầu khoảng 9-14 tuổi với các dấu hiệu: tinh hoàn lớn dần, vỡ giọng, mọc lông, có thể mộng tinh. Đây thường là thay đổi sinh lý bình thường."},
+    {"topic": "dậy thì nữ", "keywords": ["dậy thì nữ", "ngực phát triển", "kinh nguyệt đầu", "mọc lông mu", "cao nhanh"], "answer": "Dậy thì nữ thường bắt đầu khoảng 8-13 tuổi. Dấu hiệu thường gặp gồm ngực phát triển, cao nhanh, có kinh nguyệt lần đầu và thay đổi cảm xúc."},
+    {"topic": "kinh nguyệt trễ", "keywords": ["trễ kinh", "chậm kinh", "mất kinh", "kinh không đều"], "answer": "Trễ kinh có thể do mang thai, căng thẳng, thay đổi cân nặng, rối loạn nội tiết hoặc bệnh lý phụ khoa. Nên thử thai đúng thời điểm nếu có nguy cơ."},
+    {"topic": "đau bụng kinh", "keywords": ["đau bụng kinh", "đau bụng ngày đèn đỏ", "đau trước kỳ kinh"], "answer": "Đau bụng kinh mức nhẹ-vừa khá thường gặp. Nếu đau dữ dội, kéo dài hoặc kèm ngất/sốt/chảy máu bất thường thì cần khám phụ khoa."},
+    {"topic": "khí hư", "keywords": ["khí hư", "dịch âm đạo", "huyết trắng", "khí hư hôi"], "answer": "Khí hư sinh lý thường trong hoặc trắng sữa, không mùi hôi nặng, không ngứa rát. Khí hư vàng/xanh, hôi, ngứa hoặc đau rát gợi ý viêm nhiễm cần khám."},
+    {"topic": "viêm âm đạo", "keywords": ["viêm âm đạo", "ngứa âm đạo", "viêm phụ khoa", "mùi tanh"], "answer": "Viêm âm đạo có thể do nấm, vi khuẩn hoặc ký sinh trùng. Cần khám để xác định nguyên nhân, tránh tự mua thuốc đặt/kháng sinh."},
+    {"topic": "viêm đường tiểu", "keywords": ["viêm đường tiểu", "tiểu buốt", "tiểu rát", "tiểu nhiều lần"], "answer": "Tiểu buốt/rát, tiểu lắt nhắt có thể do viêm đường tiểu. Uống đủ nước, đi khám sớm nếu sốt, đau hông lưng hoặc tiểu máu."},
+    {"topic": "hpv", "keywords": ["hpv", "sùi mào gà", "mụn cóc sinh dục", "vắc xin hpv"], "answer": "HPV lây chủ yếu qua tiếp xúc tình dục. Tiêm vắc xin HPV và dùng bao cao su giúp giảm nguy cơ, dù không bảo vệ tuyệt đối."},
+    {"topic": "hiv", "keywords": ["hiv", "phơi nhiễm hiv", "pep", "prep"], "answer": "HIV lây qua máu, tình dục không bảo vệ, và từ mẹ sang con. Nếu có phơi nhiễm nguy cơ cao, cần tư vấn PEP càng sớm càng tốt (tốt nhất trong 72 giờ)."},
+    {"topic": "lậu", "keywords": ["lậu", "chảy mủ", "tiểu buốt", "gonorrhea"], "answer": "Lậu có thể gây tiểu buốt, chảy mủ niệu đạo/âm đạo, đau vùng chậu. Cần xét nghiệm và điều trị đúng phác đồ, điều trị cả bạn tình."},
+    {"topic": "giang mai", "keywords": ["giang mai", "săng", "phát ban lòng bàn tay", "syphilis"], "answer": "Giang mai có nhiều giai đoạn, có thể khởi đầu bằng vết loét không đau. Cần xét nghiệm sớm vì bệnh có thể gây biến chứng nếu bỏ qua."},
+    {"topic": "herpes", "keywords": ["herpes", "mụn nước sinh dục", "rát sinh dục", "hsv"], "answer": "Herpes sinh dục có thể gây mụn nước đau rát tái phát. Điều trị giúp giảm triệu chứng và giảm lây truyền, nhưng virus có thể tồn tại lâu dài."},
+    {"topic": "bao cao su", "keywords": ["bao cao su", "đeo bao", "rách bao", "tuột bao"], "answer": "Bao cao su giúp giảm nguy cơ mang thai và STI khi dùng đúng cách từ đầu đến cuối cuộc quan hệ."},
+    {"topic": "thuốc tránh thai hằng ngày", "keywords": ["thuốc tránh thai hằng ngày", "quên thuốc", "uống viên tránh thai"], "answer": "Thuốc tránh thai hằng ngày cần uống đều mỗi ngày đúng giờ để duy trì hiệu quả. Quên thuốc có thể làm tăng nguy cơ mang thai."},
+    {"topic": "thuốc tránh thai khẩn cấp", "keywords": ["thuốc tránh thai khẩn cấp", "uống thuốc khẩn cấp", "72 giờ", "120 giờ"], "answer": "Thuốc tránh thai khẩn cấp hiệu quả cao hơn khi dùng càng sớm càng tốt sau quan hệ nguy cơ. Không nên lạm dụng như biện pháp thường xuyên."},
+    {"topic": "que thử thai", "keywords": ["que thử thai", "thử thai", "2 vạch", "1 vạch"], "answer": "Nên thử thai sau quan hệ nguy cơ khoảng 10-14 ngày hoặc khi trễ kinh để tăng độ chính xác. Có thể thử lại sau 48 giờ nếu chưa rõ."},
+    {"topic": "cọ xát ngoài", "keywords": ["cọ xát ngoài", "không đưa vào", "chạm bên ngoài"], "answer": "Cọ xát ngoài vẫn có nguy cơ mang thai thấp nếu tinh dịch tiếp xúc gần cửa âm đạo, và vẫn có nguy cơ STI qua tiếp xúc da-niêm mạc."},
+    {"topic": "xuất tinh ngoài", "keywords": ["xuất tinh ngoài", "rút ra ngoài", "không xuất trong"], "answer": "Xuất tinh ngoài có tỷ lệ thất bại cao hơn bao cao su/thuốc tránh thai do có thể có tinh trùng trong dịch trước xuất tinh."},
+    {"topic": "vệ sinh vùng kín", "keywords": ["vệ sinh vùng kín", "rửa vùng kín", "dung dịch vệ sinh"], "answer": "Nên vệ sinh nhẹ nhàng bằng nước sạch hoặc sản phẩm phù hợp, tránh thụt rửa sâu vì dễ làm mất cân bằng hệ vi sinh."},
+    {"topic": "thủ dâm", "keywords": ["thủ dâm", "tự kích thích", "quay tay"], "answer": "Thủ dâm nhìn chung là hành vi tình dục bình thường nếu không gây đau, ám ảnh, ảnh hưởng học tập/công việc và không kèm hành vi nguy hiểm."},
+    {"topic": "mộng tinh", "keywords": ["mộng tinh", "xuất tinh lúc ngủ"], "answer": "Mộng tinh là hiện tượng sinh lý thường gặp ở tuổi dậy thì và người trẻ, thường không nguy hiểm nếu không kèm đau hoặc triệu chứng bất thường."},
+    {"topic": "xuất tinh sớm", "keywords": ["xuất tinh sớm", "ra nhanh", "chưa vào đã ra"], "answer": "Xuất tinh sớm có thể liên quan tâm lý, kỹ thuật quan hệ, hoặc yếu tố sinh học. Có thể cải thiện bằng tư vấn và điều trị phù hợp."},
+    {"topic": "rối loạn cương", "keywords": ["rối loạn cương", "khó cương", "không cương"], "answer": "Rối loạn cương có thể liên quan stress, giấc ngủ, bệnh nền mạch máu/nội tiết hoặc thuốc. Nếu kéo dài, nên khám nam khoa."},
+    {"topic": "đau khi quan hệ", "keywords": ["đau khi quan hệ", "quan hệ bị đau", "đau lúc thâm nhập"], "answer": "Đau khi quan hệ có thể do khô rát, viêm nhiễm, căng cơ sàn chậu, tâm lý hoặc bệnh lý cơ quan sinh dục. Cần đánh giá nguyên nhân cụ thể."},
+    {"topic": "đồng thuận", "keywords": ["đồng thuận", "bị ép", "cưỡng ép", "không muốn"], "answer": "Quan hệ tình dục cần sự đồng thuận tự nguyện từ tất cả các bên. Nếu bị ép buộc, ưu tiên an toàn, tìm hỗ trợ tin cậy và chăm sóc y tế/pháp lý."},
+    {"topic": "lgbtq+", "keywords": ["lgbt", "đồng tính", "song tính", "chuyển giới", "come out"], "answer": "Xu hướng tính dục và bản dạng giới đa dạng là bình thường. Bạn có thể tìm cộng đồng hỗ trợ an toàn và chuyên gia tâm lý thân thiện LGBTQ+."},
+]
 
 
 def normalize_text(text: str) -> str:
@@ -59,86 +85,140 @@ def normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def contains_keyword(text: str, kw: str) -> bool:
-    return kw in text
+def tokenize(text: str) -> set[str]:
+    return {t for t in re.findall(r"[\wàáạảãăắằặẳẵâấầậẩẫèéẹẻẽêếềệểễìíịỉĩòóọỏõôốồộổỗơớờợởỡùúụủũưứừựửữỳýỵỷỹđ]+", text) if t}
 
 
-def has_negation_for(text: str, symptom: str) -> bool:
-    return any(neg in text and symptom in neg for neg in NEGATIONS)
+def jaccard_similarity(a: str, b: str) -> float:
+    sa, sb = tokenize(a), tokenize(b)
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
 
 
 def detect_intent(text: str) -> str:
-    if any(re.match(p, text) for p in GREETING_PATTERNS):
+    if any(re.fullmatch(r"(xin chào|chào|hello|hi|hey|bot ơi)[\s!,.]*", text) for _ in [0]):
         return "greeting"
-    if any(k in text for k in ENDING_PATTERNS):
+    if any(k in text for k in INTENT_KEYWORDS["ending"]):
         return "ending"
 
-    for kw in INTENT_KEYWORDS["emergency"]:
-        if contains_keyword(text, kw):
-            return "emergency"
-    for kw in INTENT_KEYWORDS["out_of_scope"]:
-        if contains_keyword(text, kw):
-            return "out_of_scope"
+    if any(k in text for k in ["lo lắng", "hoảng", "bị ép", "không đồng thuận"]) and any(x in text for x in ["quan hệ", "tình dục", "mang thai"]):
+        return "psychology_consent"
 
-    for base in MISSING_INFO_PATTERNS:
-        if base in text:
-            return "missing_info"
+    best_intent = "out_of_scope"
+    best_score = 0.0
+    for intent, kws in INTENT_KEYWORDS.items():
+        if intent in {"greeting", "ending"}:
+            continue
+        if any(kw in text for kw in kws):
+            return intent
+        score = max((jaccard_similarity(text, kw) for kw in kws), default=0.0)
+        if score > best_score:
+            best_score, best_intent = score, intent
 
-    ordered = ["safe_sex", "pregnancy_contraception", "female_health", "male_health", "sti_std", "lgbtq", "psychology_emotion"]
-    best_intent = None
-    best_score = 0
-    for intent in ordered:
-        score = sum(1 for kw in INTENT_KEYWORDS[intent] if kw in text)
+    if best_score < SIMILARITY_THRESHOLD:
+        return "out_of_scope"
+
+    if len(text) < MIN_LEN_FOR_CONFIDENT or any(p in text for p in MISSING_SHORT_PHRASES):
+        return "missing_info"
+
+    return best_intent
+
+
+def infer_missing_fields(text: str, asked: set[str]) -> list[str]:
+    needed = []
+    if any(k in text for k in ["có thai", "mang thai", "trễ kinh", "chậm kinh", "thuốc tránh thai", "cọ xát", "xuất tinh ngoài"]):
+        if "preg_sex_contact" not in asked:
+            needed.append("Bạn có quan hệ thâm nhập hay chỉ cọ xát bên ngoài?")
+        if "preg_ejaculation" not in asked:
+            needed.append("Có xuất tinh trong hoặc gần âm đạo không?")
+        if "preg_timing" not in asked:
+            needed.append("Sự việc xảy ra khi nào (ngày/tháng gần đúng)?")
+        if "preg_lmp" not in asked:
+            needed.append("Ngày đầu kỳ kinh gần nhất của bạn là khi nào?")
+
+    if any(k in text for k in ["sti", "std", "hiv", "hpv", "lậu", "giang mai", "herpes", "viêm", "tiểu buốt", "mụn", "loét"]):
+        if "sti_symptoms" not in asked:
+            needed.append("Bạn đang có triệu chứng gì cụ thể (đau, rát, mụn, loét, dịch bất thường...)?")
+        if "sti_duration" not in asked:
+            needed.append("Triệu chứng xuất hiện từ khi nào?")
+        if "sti_risk" not in asked:
+            needed.append("Gần đây có quan hệ nguy cơ không dùng bảo vệ không?")
+
+    if any(k in text for k in ["dậy thì", "mộng tinh", "vỡ giọng", "ngực phát triển", "kinh nguyệt đầu"]):
+        if "puberty_age" not in asked:
+            needed.append("Bạn bao nhiêu tuổi?")
+        if "puberty_sex" not in asked:
+            needed.append("Giới tính sinh học của bạn là nam hay nữ?")
+        if "puberty_signs" not in asked:
+            needed.append("Biểu hiện cụ thể bạn đang gặp là gì?")
+
+    return needed
+
+
+def find_kb_answer(text: str) -> tuple[str, float]:
+    best = ""
+    best_score = 0.0
+    for item in KNOWLEDGE_BASE:
+        score = max((jaccard_similarity(text, kw) for kw in item["keywords"]), default=0.0)
         if score > best_score:
             best_score = score
-            best_intent = intent
-    if best_intent:
-        return best_intent
-    return "missing_info"
+            best = item["answer"]
+    return best, best_score
 
 
-def response_for_intent(intent: str, text: str) -> str:
+def response_for_intent(intent: str, text: str, state) -> str:
     if intent == "greeting":
-        return "Xin chào 👋 Mình hỗ trợ chuyên sâu về sức khỏe giới tính, sinh sản, STI/STD, tránh thai và tâm lý liên quan."
+        return "Xin chào 👋 Mình hỗ trợ các câu hỏi về sức khỏe giới tính, sinh sản, dậy thì và STI/STD."
     if intent == "ending":
-        return "Mình đã kết thúc cuộc trò chuyện. Nếu cần, bạn quay lại bất cứ lúc nào nhé."
+        return "Mình đã kết thúc cuộc trò chuyện. Khi cần bạn quay lại nhé."
     if intent == "out_of_scope":
-        return "Xin lỗi, tôi chỉ hỗ trợ các vấn đề liên quan đến sức khỏe giới tính, sức khỏe sinh sản, quan hệ an toàn, tránh thai, bệnh lây truyền qua đường tình dục và tâm lý liên quan. Bạn có thể hỏi lại đúng lĩnh vực này nhé."
-    if intent == "missing_info":
-        for pattern, asks in MISSING_INFO_PATTERNS.items():
-            if pattern in text:
-                return "Mình chưa đủ dữ kiện để kết luận. " + " ".join(asks)
-        return "Mình chưa đủ dữ kiện để kết luận. Bạn mô tả thêm thời gian xảy ra, triệu chứng chính và mức độ hiện tại nhé."
+        return OUT_OF_SCOPE_REPLY
 
-    risk = "🟢"
-    if intent == "emergency":
-        risk = "🔴"
-    elif "rách bao" in text or "không dùng bao" in text:
-        risk = "🟠"
+    missing = infer_missing_fields(text, state.asked_slots)
+    if intent == "missing_info" or missing:
+        if missing:
+            for q in missing:
+                if "quan hệ thâm nhập" in q:
+                    state.asked_slots.add("preg_sex_contact")
+                elif "xuất tinh" in q:
+                    state.asked_slots.add("preg_ejaculation")
+                elif "xảy ra khi nào" in q:
+                    state.asked_slots.add("preg_timing")
+                elif "kỳ kinh" in q:
+                    state.asked_slots.add("preg_lmp")
+                elif "triệu chứng gì" in q:
+                    state.asked_slots.add("sti_symptoms")
+                elif "xuất hiện từ khi nào" in q:
+                    state.asked_slots.add("sti_duration")
+                elif "quan hệ nguy cơ" in q:
+                    state.asked_slots.add("sti_risk")
+                elif "bao nhiêu tuổi" in q:
+                    state.asked_slots.add("puberty_age")
+                elif "Giới tính sinh học" in q:
+                    state.asked_slots.add("puberty_sex")
+                elif "Biểu hiện cụ thể" in q:
+                    state.asked_slots.add("puberty_signs")
+            return "Mình chưa đủ dữ kiện để nhận định. " + " ".join(missing)
+        return "Mình chưa đủ dữ kiện để nhận định. Bạn mô tả rõ bối cảnh, thời điểm và triệu chứng cụ thể nhé."
 
-    bodies = {
-        "safe_sex": "Bao cao su giúp giảm nguy cơ mang thai và STI. Xuất tinh ngoài và ngày an toàn không đảm bảo tuyệt đối. Thuốc tránh thai khẩn cấp hiệu quả nhất khi dùng càng sớm càng tốt và không nên dùng thường xuyên.",
-        "pregnancy_contraception": "Trễ kinh có thể do mang thai hoặc stress/rối loạn nội tiết. Nên thử thai khi trễ kinh hoặc sau quan hệ nguy cơ khoảng 10-14 ngày. Đang cho con bú vẫn có thể mang thai. Không lạm dụng thuốc tránh thai khẩn cấp.",
-        "sti_std": "HIV không lây qua hôn thông thường nếu không có máu/vết thương hở. Quan hệ bằng miệng vẫn có nguy cơ lây một số STI. Có đau tiểu, mủ, khí hư hôi, loét hoặc mụn sinh dục thì cần đi khám và xét nghiệm STI, không tự mua kháng sinh.",
-        "male_health": "Xuất tinh sớm/khó cương có thể liên quan tâm lý, thói quen, nội tiết hoặc bệnh lý. Dương vật cong nhẹ có thể bình thường, nhưng cong đau hoặc khó quan hệ thì nên khám nam khoa. Đau tinh hoàn kèm sưng đỏ/sốt cần khám sớm.",
-        "female_health": "Khí hư vàng/hôi/ngứa rát có thể gợi ý viêm nhiễm phụ khoa. Đau khi quan hệ có thể do khô rát, viêm nhiễm, tâm lý hoặc bệnh lý phụ khoa. Kinh nguyệt không đều có thể liên quan stress, nội tiết hoặc bệnh lý.",
-        "lgbtq": "Bối rối xu hướng tính dục/bản dạng giới là điều có thể gặp và không có gì đáng xấu hổ. Come out nên ưu tiên an toàn và người tin cậy, không cần vội. Hormone chuyển giới cần bác sĩ theo dõi, không tự mua dùng.",
-        "psychology_emotion": "Mình hiểu bạn đang lo lắng. Bạn có quyền từ chối khi chưa an toàn hoặc chưa sẵn sàng. Nếu bị ép quan hệ, hãy ưu tiên an toàn cá nhân và tìm người tin cậy hỗ trợ. Đánh giá nguy cơ thực tế rồi mới kết luận để tránh hoảng sợ quá mức.",
-        "emergency": "Đây là tình huống nguy cơ cao cần xử trí sớm. Nếu chảy máu nhiều, đau dữ dội, ngất/chóng mặt nhiều, nghi xâm hại hoặc sưng đau nghiêm trọng: đi cấp cứu ngay. Nếu rách bao: cần đánh giá thời điểm, nguy cơ mang thai và STI để xử trí kịp thời.",
-    }
-    body = bodies.get(intent, "")
+    answer, score = find_kb_answer(text)
+    if score < SIMILARITY_THRESHOLD:
+        return "Mình chưa đủ dữ kiện để nhận định. Bạn mô tả rõ hơn về triệu chứng, thời điểm và hành vi nguy cơ nhé."
+
     return (
-        f"Nhận định: {body}\n"
-        f"Mức độ nguy cơ: {risk}\n"
-        "Hướng xử trí / lời khuyên: Ưu tiên theo dõi triệu chứng thật sự, không tự dùng thuốc kê đơn, và áp dụng biện pháp an toàn phù hợp.\n"
-        "Khi nào cần đi khám: Khi triệu chứng kéo dài, nặng dần, hoặc có dấu hiệu cảnh báo như sốt cao/chảy máu nhiều/đau dữ dội.\n"
-        "Lưu ý an toàn: Thông tin này để tham khảo và không thay thế khám trực tiếp."
+        f"Nhận định:\n- {answer}\n"
+        "Mức độ cần lưu ý:\n- Tạm thời chưa thể thay thế chẩn đoán trực tiếp; cần theo dõi dấu hiệu bất thường.\n"
+        "Hướng xử trí/lời khuyên:\n- Theo dõi triệu chứng, tránh tự dùng thuốc kê đơn, ưu tiên biện pháp bảo vệ khi quan hệ.\n"
+        "Khi nào cần đi khám:\n- Nếu triệu chứng kéo dài, nặng dần, tái phát hoặc có dấu hiệu cảnh báo như sốt cao, đau dữ dội, chảy máu bất thường.\n"
+        "Lưu ý an toàn:\n- Thông tin mang tính tham khảo, không thay thế tư vấn/chẩn đoán của bác sĩ."
     )
 
 
 @dataclass
 class ChatState:
     asked_questions: list[str] = field(default_factory=list)
+    asked_slots: set[str] = field(default_factory=set)
 
 
 def chatbot(message: str, history: list, state: ChatState):
@@ -149,9 +229,10 @@ def chatbot(message: str, history: list, state: ChatState):
     intent = detect_intent(text)
     if intent == "ending":
         state.asked_questions.clear()
+        state.asked_slots.clear()
     else:
         state.asked_questions.append(text)
-    return response_for_intent(intent, text), state
+    return response_for_intent(intent, text, state), state
 
 
 custom_css = """
@@ -175,12 +256,7 @@ if gr is not None:
             fn=chatbot,
             additional_inputs=[state],
             additional_outputs=[state],
-            textbox=gr.Textbox(placeholder="Ví dụ: Trễ kinh 10 ngày thì nên làm gì?", lines=2),
-            examples=[
-                "Em lo có thai dù dùng bao cao su thì nên làm gì?",
-                "Sau quan hệ bị chảy máu và đau dữ dội có nguy hiểm không?",
-                "Mình bị ép quan hệ và rất hoảng loạn, giờ nên làm gì?",
-            ],
+            textbox=gr.Textbox(placeholder="Nhập câu hỏi của bạn...", lines=2),
         )
 
 if __name__ == "__main__" and gr is not None:
