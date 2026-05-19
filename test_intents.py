@@ -1,53 +1,58 @@
 from datetime import date
 
-from app import (
-    ChatState,
-    detect_intent,
-    normalize_text,
-    response_for_intent,
-    update_knowledge_base,
-)
-
-CASES = [
-    ("cách nấu mì cay", "out_of_scope"),
-    ("em bị đau khi quan hệ", "sexual_function"),
-    ("quan hệ lần đầu nên dùng bao cao su thế nào", "safe_sex"),
-    ("trễ kinh 7 ngày có thai không", "contraception_pregnancy"),
-    ("hiv có lây qua hôn không", "sti_std"),
-]
+from app import ChatState, detect_intent, normalize_text, response_for_intent, update_knowledge_base
 
 
-def test_intents_and_structure():
-    for text, expected in CASES:
-        state = ChatState()
-        norm = normalize_text(text)
-        got = detect_intent(norm)
-        assert got == expected, f"{text}: expected {expected}, got {got}"
-        rsp = response_for_intent(got, norm, state)
-        if got not in {"greeting", "ending", "out_of_scope", "missing_info"}:
-            for section in ["Nhận định:", "Mức độ cần lưu ý:", "Hướng xử trí/lời khuyên:", "Khi nào cần đi khám:", "Lưu ý an toàn:"]:
-                assert section in rsp or "Mình chưa đủ dữ liệu" in rsp or "Mình chưa đủ dữ kiện" in rsp
+def test_main_intents_with_typos_and_short_forms():
+    cases = [
+        ("chao bot", "greeting"),
+        ("qhe ko bao co thai ko", "contraception_pregnancy"),
+        ("bi mun sinh duc", "sti_std"),
+        ("em bi roi loan cuong", "sexual_function"),
+    ]
+    for text, expected in cases:
+        assert detect_intent(normalize_text(text)) == expected
 
 
-def test_out_of_scope_question():
-    state = ChatState()
-    text = normalize_text("hôm nay giá bitcoin bao nhiêu")
-    reply = response_for_intent(detect_intent(text), text, state)
-    assert "Mình chỉ hỗ trợ" in reply
+def test_missing_info_only_asks_unfilled_slots():
+    state = ChatState(memory={"preg_sex_contact": "đã quan hệ thâm nhập"})
+    text = normalize_text("em lo có thai")
+    reply = response_for_intent("contraception_pregnancy", text, state)
+    assert "quan hệ thâm nhập" not in reply
+    assert "xuất tinh" in reply and "kỳ kinh" in reply
 
 
-def test_missing_info_question():
-    state = ChatState()
-    text = normalize_text("em lo quá có thai không")
-    reply = response_for_intent(detect_intent(text), text, state)
-    assert "Mình chưa đủ dữ kiện" in reply
+def test_enough_info_returns_structured_answer():
+    state = ChatState(memory={
+        "preg_sex_contact": "quan hệ thâm nhập",
+        "preg_ejaculation": "có xuất tinh",
+        "preg_timing": "2 ngày trước",
+        "preg_lmp": "đầu tháng",
+    })
+    text = normalize_text("trễ kinh có thai không")
+    reply = response_for_intent("contraception_pregnancy", text, state)
+    for section in [
+        "1. Nhận định tình trạng",
+        "2. Chẩn đoán phù hợp nhất",
+        "3. Mức độ nguy cơ",
+        "4. Hướng xử trí cụ thể",
+        "5. Khi nào cần đi khám",
+        "6. Lưu ý an toàn",
+    ]:
+        assert section in reply
 
 
-def test_ambiguous_question_and_similarity_guard():
-    state = ChatState()
-    text = normalize_text("em bị sao")
-    reply = response_for_intent(detect_intent(text), text, state)
-    assert "Mình chưa đủ dữ kiện" in reply
+def test_out_of_scope_and_emergency_and_ending():
+    oos = response_for_intent(detect_intent(normalize_text("giá vàng hôm nay")), normalize_text("giá vàng hôm nay"), ChatState())
+    assert "Mình chỉ hỗ trợ" in oos
+
+    emergency = response_for_intent(detect_intent(normalize_text("em đau bụng dữ dội và ngất")), normalize_text("em đau bụng dữ dội và ngất"), ChatState())
+    assert "Đi khám ngay" in emergency or "cấp cứu" in emergency
+
+    st = ChatState(memory={"preg_lmp": "..."}, asked_slots={"preg_lmp"})
+    end = response_for_intent("ending", normalize_text("bye"), st)
+    assert "kết thúc" in end
+    assert st.memory == {} and st.asked_slots == set()
 
 
 def test_update_knowledge_base_reject_unapproved_source():
