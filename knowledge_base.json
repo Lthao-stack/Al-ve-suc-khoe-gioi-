@@ -1,44 +1,12 @@
 [
-  {
-    "topic": "dậy thì nam",
-    "keywords": ["dậy thì nam", "vỡ giọng", "mọc ria", "mộng tinh", "tăng chiều cao"],
-    "answer": "Dậy thì nam thường bắt đầu khoảng 9-14 tuổi với các dấu hiệu: tinh hoàn lớn dần, vỡ giọng, mọc lông, có thể mộng tinh. Đây thường là thay đổi sinh lý bình thường.",
-    "source": "WHO - Adolescent health",
-    "last_updated": "2026-05-19"
-  },
-  {
-    "topic": "dậy thì nữ",
-    "keywords": ["dậy thì nữ", "ngực phát triển", "kinh nguyệt đầu", "mọc lông mu", "cao nhanh"],
-    "answer": "Dậy thì nữ thường bắt đầu khoảng 8-13 tuổi. Dấu hiệu thường gặp gồm ngực phát triển, cao nhanh, có kinh nguyệt lần đầu và thay đổi cảm xúc.",
-    "source": "CDC - Puberty",
-    "last_updated": "2026-05-19"
-  },
-  {
-    "topic": "hiv",
-    "keywords": ["hiv", "phơi nhiễm hiv", "pep", "prep"],
-    "answer": "HIV lây qua máu, tình dục không bảo vệ, và từ mẹ sang con. Nếu có phơi nhiễm nguy cơ cao, cần tư vấn PEP càng sớm càng tốt (tốt nhất trong 72 giờ).",
-    "source": "CDC - HIV Basics",
-    "last_updated": "2026-05-19"
-  },
-  {
-    "topic": "bao cao su",
-    "keywords": ["bao cao su", "đeo bao", "rách bao", "tuột bao"],
-    "answer": "Bao cao su giúp giảm nguy cơ mang thai và STI khi dùng đúng cách từ đầu đến cuối cuộc quan hệ.",
-    "source": "WHO - Contraception",
-    "last_updated": "2026-05-19"
-  },
-  {
-    "topic": "thuốc tránh thai khẩn cấp",
-    "keywords": ["thuốc tránh thai khẩn cấp", "uống thuốc khẩn cấp", "72 giờ", "120 giờ"],
-    "answer": "Thuốc tránh thai khẩn cấp hiệu quả cao hơn khi dùng càng sớm càng tốt sau quan hệ nguy cơ. Không nên lạm dụng như biện pháp thường xuyên.",
-    "source": "Bộ Y tế Việt Nam - Hướng dẫn SKSS",
-    "last_updated": "2026-05-19"
-  },
-  {
-    "topic": "khí hư",
-    "keywords": ["khí hư", "dịch âm đạo", "huyết trắng", "khí hư hôi"],
-    "answer": "Khí hư sinh lý thường trong hoặc trắng sữa, không mùi hôi nặng, không ngứa rát. Khí hư vàng/xanh, hôi, ngứa hoặc đau rát gợi ý viêm nhiễm cần khám.",
-    "source": "Bệnh viện Từ Dũ - Tư vấn phụ khoa",
-    "last_updated": "2026-05-19"
-  }
+  {"topic":"dậy thì nam","intent":"puberty","keywords":["dậy thì nam","vỡ giọng","mộng tinh","mọc ria","cao nhanh"],"answer":"Dậy thì nam thường 9-14 tuổi, có thể vỡ giọng, mọc lông, mộng tinh. Đây thường là sinh lý bình thường nếu không đau/sưng bất thường.","source":"WHO - Adolescent health","last_updated":"2026-05-19"},
+  {"topic":"dậy thì nữ","intent":"puberty","keywords":["dậy thì nữ","ngực phát triển","kinh nguyệt đầu","cao nhanh"],"answer":"Dậy thì nữ thường 8-13 tuổi với phát triển ngực, cao nhanh, có kinh nguyệt đầu và biến đổi cảm xúc.","source":"CDC - Puberty","last_updated":"2026-05-19"},
+  {"topic":"kinh nguyệt và trễ kinh","intent":"contraception_pregnancy","keywords":["trễ kinh","chậm kinh","kinh nguyệt không đều","mất kinh"],"answer":"Trễ kinh có thể do stress, thay đổi cân nặng, rối loạn nội tiết hoặc mang thai. Nếu trễ >7 ngày sau quan hệ nguy cơ, nên thử thai đúng thời điểm.","source":"Bộ Y tế Việt Nam - Hướng dẫn SKSS","last_updated":"2026-05-19"},
+  {"topic":"bao cao su","intent":"safe_sex","keywords":["bao cao su","đeo bao","rách bao","tuột bao"],"answer":"Bao cao su giảm nguy cơ mang thai và STI khi dùng đúng cách từ đầu đến cuối cuộc quan hệ.","source":"WHO - Contraception","last_updated":"2026-05-19"},
+  {"topic":"nguy cơ mang thai","intent":"contraception_pregnancy","keywords":["cọ xát","xuất tinh ngoài","quan hệ không bao","có thai không"],"answer":"Nguy cơ mang thai phụ thuộc mức độ tiếp xúc tinh dịch với âm đạo, thời điểm trong chu kỳ và có quan hệ thâm nhập hay không.","source":"Bệnh viện Từ Dũ - Tư vấn SKSS","last_updated":"2026-05-19"},
+  {"topic":"sti std cơ bản","intent":"sti_std","keywords":["sti","std","hiv","lậu","giang mai","hpv","herpes"],"answer":"STI/STD có thể biểu hiện kín đáo. Cần xét nghiệm đúng thời điểm nếu có quan hệ nguy cơ, kể cả khi chưa có triệu chứng rõ.","source":"CDC - STI Basics","last_updated":"2026-05-19"},
+  {"topic":"khí hư và viêm phụ khoa","intent":"hygiene","keywords":["khí hư","huyết trắng","viêm phụ khoa","ngứa vùng kín"],"answer":"Khí hư sinh lý thường không hôi nặng, không ngứa rát. Khí hư vàng/xanh, hôi, ngứa, đau là dấu hiệu cần khám phụ khoa.","source":"Bệnh viện Phụ sản Trung ương - Tư vấn phụ khoa","last_updated":"2026-05-19"},
+  {"topic":"nam khoa","intent":"sexual_function","keywords":["xuất tinh sớm","rối loạn cương","khó cương","giảm ham muốn"],"answer":"Rối loạn chức năng tình dục nam có thể liên quan tâm lý, stress, giấc ngủ, bệnh nền mạch máu-nội tiết. Cần khám nam khoa khi kéo dài.","source":"Bệnh viện Bình Dân - Nam khoa","last_updated":"2026-05-19"},
+  {"topic":"lgbtq và đồng thuận","intent":"lgbtq","keywords":["lgbt","đồng tính","chuyển giới","đồng thuận"],"answer":"Xu hướng tính dục và bản dạng giới là đa dạng. Quan hệ an toàn và đồng thuận rõ ràng luôn là nguyên tắc bắt buộc cho mọi nhóm.","source":"WHO - Sexual health","last_updated":"2026-05-19"},
+  {"topic":"tâm lý tuổi dậy thì","intent":"psychology_consent","keywords":["lo quá","hoảng loạn","áp lực","xâm hại","bị ép"],"answer":"Lo âu sau trải nghiệm tình dục là thường gặp. Nếu có dấu hiệu bị ép buộc/xâm hại, cần tìm người tin cậy và hỗ trợ y tế-tâm lý ngay.","source":"WHO - Adolescent mental health","last_updated":"2026-05-19"}
 ]
